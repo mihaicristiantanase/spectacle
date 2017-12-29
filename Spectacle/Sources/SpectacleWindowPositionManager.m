@@ -74,22 +74,37 @@
 
     if (CoreDockGetAutoHideEnabled()) {
       CGFloat totalWidth = 0.0f;
+      CGFloat totalHeight = 0.0f;
 
       for (id screen in screens) {
         totalWidth += ((NSScreen*)screen).frame.size.width;
+        totalHeight += ((NSScreen*)screen).frame.size.height;
       }
 
-      void (^removeGapFromLeft)(CGRect *) = ^(CGRect* r) {
-        if (r->origin.x == 4) {
+      BOOL (^fequal)(CGFloat, CGFloat) = ^BOOL(CGFloat a, CGFloat b) {
+        return a - FLT_EPSILON <= b && b <= a + FLT_EPSILON;
+      };
+
+      const CGFloat gap = 4.0f;
+      void (^removeGapsFromMargins)(CGRect*) = ^(CGRect* r) {
+        // horizontal gap
+        if (fequal(r->origin.x, gap)) {
           r->size.width += r->origin.x;
           r->origin.x = 0;
-        } else if (totalWidth - (r->origin.x + r->size.width) == 4) {
-          r->size.width += 4;
+        } else if (fequal(totalWidth - (r->origin.x + r->size.width), gap)) {
+          r->size.width += gap;
+        }
+        // vertical gap
+        if (fequal(r->origin.y, gap)) {
+          r->size.height += r->origin.y;
+          r->origin.y = 0;
+        } else if (fequal(totalHeight - (r->origin.y + r->size.height), gap)) {
+          r->size.height += gap;
         }
       };
 
-      removeGapFromLeft(&visibleFrameOfDestinationScreen);
-      removeGapFromLeft(&visibleFrameOfSourceScreen);
+      removeGapsFromMargins(&visibleFrameOfDestinationScreen);
+      removeGapsFromMargins(&visibleFrameOfSourceScreen);
     }
   }
 
